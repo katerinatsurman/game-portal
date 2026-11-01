@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="https://i.pinimg.com/1200x/98/5d/64/985d643c175ad9f6ec1d4dd7df8f9496.jpg">
+  <title>Гра «21»</title>
+
+  <style>
+    
+    :root {
+      --bg: #17112b;
+      --panel: #261b3e;
+      --text: #fff8ff;
+      --muted: #d1bfdc;
+      --accent: #ff9acb;
+      --gold: #b9a1ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 28px 16px;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(135deg, #180d2bf0, #491c5be0),
+        url('https://oss.aiyuzhou8.com/2024/07/20240722015556805.webp')
+        center / cover fixed;
+    }
+
+    .app {
+      width: min(980px, 100%);
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+      padding: 24px 18px;
+      border: 1px solid #ffffff26;
+      border-radius: 26px;
+      background: linear-gradient(135deg, #2a1a48dd, #5b2e70b8);
+      box-shadow: 0 18px 45px #08031155;
+      backdrop-filter: blur(10px);
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .16em;
+      font-size: .78rem;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 9px 0;
+      font-family: Georgia, serif;
+      font-size: clamp(2rem, 5vw, 3.4rem);
+    }
+
+    h1 span {
+      color: var(--accent);
+    }
+
+    .subtitle {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      margin-bottom: 16px;
+      border: 1px solid #e6c8ff3d;
+      border-radius: 18px;
+      background: #211533d9;
+    }
+
+    .round span {
+      color: var(--accent);
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    .players {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .player {
+      padding: 20px;
+      border: 1px solid #e6c8ff40;
+      border-radius: 24px;
+      background: linear-gradient(145deg, #2d2049ed, #1c142ff0);
+      min-width: 0;
+      transition: .2s;
+      box-shadow: 0 14px 36px #08031155;
+      backdrop-filter: blur(8px);
+    }
+
+    .player.active {
+      border-color: var(--accent);
+    }
+
+    .player.winner {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 2px #b9a1ff44;
+    }
+
+    .player-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2 {
+      font-size: 1.15rem;
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .avatar {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #ff9acb, #b9a1ff);
+      color: #241332;
+      font-size: 1.35rem;
+    }
+
+    .score-label {
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    .score {
+      font-size: 2.6rem;
+      font-weight: 800;
+      margin: 2px 0 14px;
+      color: var(--accent);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      min-height: 146px;
+    }
+
+    .playing-card {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      min-height: 142px;
+      padding: 8px;
+      border-radius: 14px;
+      background: #fff8e9; /* Світлий фон картки, як у справжніх гральних карт */
+      border: 2px solid #fff9e9;
+      box-shadow: 0 7px 18px #08031155;
+      animation: deal .25s ease-out;
+    }
+
+    /* Картинка повністю вміщується всередину картки без обрізання */
+    .playing-card::before {
+      content: '';
+      position: absolute;
+      inset: 6px; /* Невеликий відступ від країв картки */
+      z-index: 1;
+      background-image: var(--card-art);
+      background-size: contain; /* Показує всю картинку повністю у пропорціях */
+      background-repeat: no-repeat;
+      background-position: center;
+      opacity: 1;
+    }
+
+    /* Очки знизу поверх карти */
+    .playing-card .value {
+      position: relative;
+      z-index: 2;
+      align-self: center;
+      font-size: .75rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(23, 17, 43, 0.85);
+      color: #fff8ff;
+      border: 1px solid #e6c8ff40;
+    }
+
+    .empty-card {
+      display: grid;
+      place-items: center;
+      min-height: 142px;
+      border: 1px dashed #c9a8e0a6;
+      border-radius: 14px;
+      color: #d5bce8;
+      font-size: 1.5rem;
+      background: #ffffff08;
+    }
+
+    .player-total {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding-top: 14px;
+      margin-top: 14px;
+      border-top: 1px solid #e6c8ff30;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .player-total strong {
+      color: var(--text);
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 22px 0 16px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 20px;
+      font-size: .98rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .15s, filter .15s;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+
+    button:focus-visible {
+      outline: 3px solid var(--gold);
+      outline-offset: 3px;
+    }
+
+    button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    .primary {
+      color: #281333;
+      background: linear-gradient(135deg, #ffacd4, #c5aaff);
+    }
+
+    .secondary {
+      color: var(--text);
+      background: #3a2a51;
+      border: 1px solid #9c79bb70;
+    }
+
+    .result {
+      text-align: center;
+      min-height: 70px;
+      padding: 18px;
+      border-radius: 18px;
+      background: #211533e8;
+      border: 1px solid #e6c8ff3d;
+    }
+
+    .result strong {
+      display: block;
+      font-size: 1.2rem;
+      margin-bottom: 5px;
+      color: #ffb1d9;
+    }
+
+    .result p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .hint {
+      color: #e1cfea;
+      font-size: .82rem;
+      text-align: center;
+      margin-top: 16px;
+      line-height: 1.5;
+    }
+
+    @keyframes deal {
+      from {
+        opacity: 0;
+        transform: translateY(8px) rotate(-2deg);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) rotate(0);
+      }
+    }
+
+    @media (max-width: 620px) {
+      body {
+        padding: 20px 12px;
+        background-attachment: scroll;
+      }
+
+      .players {
+        grid-template-columns: 1fr;
+      }
+
+      .player {
+        padding: 16px;
+      }
+
+      .playing-card {
+        min-height: 118px;
+      }
+
+      .toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .score {
+        font-size: 2.2rem;
+      }
+
+      header {
+        padding: 20px 14px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <header>
+      <div class="eyebrow">
+        ✦ Card game · лабораторна робота № 9 ✦
+      </div>
+      <h1>Гра «21» <span>♠</span></h1>
+      <p class="subtitle">
+        Трохи магії, красиві карти й три раунди до перемоги.
+      </p>
+    </header>
+
+    <section class="toolbar">
+      <div class="round">
+        Раунд: <span id="roundNumber">0</span> / 3
+      </div>
+      <div class="status" id="gameStatus" role="status" aria-live="polite">
+        Введіть ім’я, щоб почати гру.
+      </div>
+    </section>
+
+    <section class="players">
+      <article class="player active" id="humanPanel">
+        <div class="player-head">
+          <h2 id="humanName">Гравець</h2>
+          <div class="avatar">🙂</div>
+        </div>
+
+        <div class="score-label">Загальна кількість очок</div>
+        <div class="score" id="humanScore">0</div>
+        <div class="cards" id="humanCards"></div>
+
+        <div class="player-total">
+          <span>Карт отримано</span>
+          <strong id="humanCardCount">0 / 3</strong>
+        </div>
+      </article>
+
+      <article class="player" id="computerPanel">
+        <div class="player-head">
+          <h2>Комп’ютер</h2>
+          <div class="avatar">🤖</div>
+        </div>
+
+        <div class="score-label">Загальна кількість очок</div>
+        <div class="score" id="computerScore">0</div>
+        <div class="cards" id="computerCards"></div>
+
+        <div class="player-total">
+          <span>Карт отримано</span>
+          <strong id="computerCardCount">0 / 3</strong>
+        </div>
+      </article>
+    </section>
+
+    <div class="controls">
+      <button class="primary" id="startButton" type="button">
+        Почати гру
+      </button>
+      <button class="primary" id="nextButton" type="button" disabled>
+        Наступний раунд
+      </button>
+      <button class="secondary" id="resetButton" type="button">
+        Нова гра
+      </button>
+    </div>
+
+    <section class="result" id="result" aria-live="polite">
+      <strong>Готові зіграти?</strong>
+      <p>Натисніть «Почати гру», щоб розпочати перший раунд.</p>
+    </section>
+
+    <p class="hint">
+      Номінали: 6–10 — відповідне число; валет — 2;
+      дама — 3; король — 4; туз — 11.
+    </p>
+  </main>
+
+  <script>
+    'use strict';
+
+   const deck = [
+      { name: '6', value: 6, artIndex: 0 },
+      { name: '7', value: 7, artIndex: 1 },
+      { name: '8', value: 8, artIndex: 2 },
+      { name: '9', value: 9, artIndex: 3 },
+      { name: '10', value: 10, artIndex: 4 },
+      { name: 'Валет', value: 2, artIndex: 5 },
+      { name: 'Дама', value: 3, artIndex: 6 },
+      { name: 'Король', value: 4, artIndex: 7 },
+      { name: 'Туз', value: 11, artIndex: 8 }
+    ];
+
+    const suits = ['♠', '♥', '♦', '♣'];
+
+    
+    const cardArt = [
+      'https://i.pinimg.com/736x/59/3f/ea/593fea76852fd415352d8dce5cc9c1ba.jpg',
+	  'https://i.pinimg.com/736x/b9/69/be/b969be6e4e7ac62c8f21a2145ef6155a.jpg',
+	  'https://i.pinimg.com/736x/96/0a/a7/960aa7afb71502ead98bbee741362aa1.jpg',
+	  'https://i.pinimg.com/736x/8b/5c/84/8b5c84566fb1e42fca40b3424662ee87.jpg',
+	  'https://i.pinimg.com/1200x/d4/b7/38/d4b738b19d01d50f3cd4fac9d45f4e6f.jpg',
+	  'https://i.pinimg.com/736x/1e/bb/5a/1ebb5a2f98060f1a82981e925991927d.jpg',
+	  'https://i.pinimg.com/736x/5c/1c/16/5c1c1674ab7bbd2953f974fcb65760b9.jpg',
+	  'https://i.pinimg.com/736x/45/c0/04/45c0042e02d700c2b7e01cb4e1c6aaa4.jpg',
+	  'https://i.pinimg.com/736x/63/fb/a4/63fba48af81915700427de2da1eb749c.jpg'
+    ];
+
+    const state = {
+      name: '',
+      round: 0,
+      human: [],
+      computer: [],
+      started: false,
+      finished: false
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function drawCard() {
+      const randomIndex = Math.floor(Math.random() * deck.length);
+      const base = deck[randomIndex];
+      const suit = suits[Math.floor(Math.random() * suits.length)];
+
+      return {
+        name: base.name,
+        value: base.value,
+        artIndex: base.artIndex, 
+        suit: suit
+      };
+    }
+
+    function total(cards) {
+      return cards.reduce((sum, card) => sum + card.value, 0);
+    }
+
+    function renderCards(containerId, cards) {
+      const container = $(containerId);
+      container.replaceChildren();
+
+      for (let i = 0; i < 3; i++) {
+        const card = cards[i];
+
+        if (!card) {
+          const empty = document.createElement('div');
+          empty.className = 'empty-card';
+          empty.textContent = '＋';
+          empty.setAttribute('aria-label', 'Карту ще не видано');
+          container.append(empty);
+          continue;
+        }
+
+        const element = document.createElement('div');
+        element.className = 'playing-card';
+
+        const artIndex = card.artIndex;
+
+        element.style.setProperty(
+          '--card-art',
+          `url("${cardArt[artIndex]}")`
+        );
+
+        element.title = `${card.name}, ${card.value} очок`;
+
+       
+        const value = document.createElement('span');
+        value.className = 'value';
+        value.textContent = card.value + ' оч.';
+
+        element.append(value);
+        container.append(element);
+      }
+    }
+
+    function updateView() {
+      $('roundNumber').textContent = state.round;
+      $('humanScore').textContent = total(state.human);
+      $('computerScore').textContent = total(state.computer);
+
+      $('humanCardCount').textContent = `${state.human.length} / 3`;
+      $('computerCardCount').textContent = `${state.computer.length} / 3`;
+
+      $('humanName').textContent = state.name || 'Гравець';
+
+      renderCards('humanCards', state.human);
+      renderCards('computerCards', state.computer);
+
+      $('startButton').disabled = state.started;
+      $('nextButton').disabled =
+        !state.started || state.finished || state.round >= 3;
+
+      $('humanPanel').classList.toggle(
+        'winner',
+        state.finished && total(state.human) > total(state.computer)
+      );
+
+      $('computerPanel').classList.toggle(
+        'winner',
+        state.finished && total(state.computer) > total(state.human)
+      );
+
+      $('humanPanel').classList.toggle(
+        'active',
+        state.started && !state.finished
+      );
+
+      $('computerPanel').classList.toggle('active', false);
+    }
+
+    function showResult(title, message) {
+      $('result').replaceChildren();
+
+      const heading = document.createElement('strong');
+      heading.textContent = title;
+
+      const paragraph = document.createElement('p');
+      paragraph.textContent = message;
+
+      $('result').append(heading, paragraph);
+    }
+
+    function startGame() {
+      if (state.started) return;
+
+      let name = '';
+
+      while (!name) {
+        const answer = prompt(
+          'Введіть ваше ім’я (від 1 до 20 символів):'
+        );
+
+        if (answer === null) {
+          showResult(
+            'Гру скасовано',
+            'Натисніть «Почати гру», коли будете готові.'
+          );
+          return;
+        }
+
+        name = answer.trim();
+
+        if (!name || name.length > 20) {
+          alert(
+            'Ім’я не може бути порожнім і має містити не більше 20 символів.'
+          );
+          name = '';
+        }
+      }
+
+      state.name = name;
+      state.started = true;
+      state.finished = false;
+
+      playRound();
+    }
+
+    function playRound() {
+      if (!state.started || state.finished || state.round >= 3) return;
+
+      state.round++;
+
+      state.human.push(drawCard());
+      state.computer.push(drawCard());
+
+      updateView();
+
+      $('gameStatus').textContent = `Раунд ${state.round} завершено.`;
+
+      if (state.round === 3) {
+        state.finished = true;
+        updateView();
+
+        const humanTotal = total(state.human);
+        const computerTotal = total(state.computer);
+
+        if (humanTotal > computerTotal) {
+          showResult(
+            `Переміг гравець ${state.name}!`,
+            `Ваш результат — ${humanTotal} очок, комп’ютера — ${computerTotal}.`
+          );
+        } else if (computerTotal > humanTotal) {
+          showResult(
+            'Переміг комп’ютер!',
+            `Ваш результат — ${humanTotal} очок, комп’ютера — ${computerTotal}.`
+          );
+        } else {
+          showResult(
+            'Нічия!',
+            `Обидва гравці набрали по ${humanTotal} очок.`
+          );
+        }
+
+        $('gameStatus').textContent = 'Гру завершено.';
+      } else {
+        showResult(
+          `Раунд ${state.round}`,
+          `${state.name}: ${total(state.human)} оч. ` +
+          `Комп’ютер: ${total(state.computer)} оч. ` +
+          'Натисніть «Наступний раунд».'
+        );
+      }
+    }
+
+    function resetGame() {
+      state.name = '';
+      state.round = 0;
+      state.human = [];
+      state.computer = [];
+      state.started = false;
+      state.finished = false;
+
+      $('gameStatus').textContent = 'Введіть ім’я, щоб почати гру.';
+
+      showResult(
+        'Готові зіграти?',
+        'Натисніть «Почати гру», щоб ввести ім’я та розпочати перший раунд.'
+      );
+
+      updateView();
+    }
+
+    $('startButton').addEventListener('click', startGame);
+    $('nextButton').addEventListener('click', playRound);
+    $('resetButton').addEventListener('click', resetGame);
+
+    updateView();
+  </script>
+</body>
+</html>
